@@ -1,0 +1,36 @@
+version: "3.7"
+
+volumes:
+    maven_repo: {}
+
+x-abstract-mvn-builder: &x-abstract-mvn-builder
+    image: maven:3.8-jdk-11
+    working_dir: /usr/src/mymaven
+    volumes:
+        - maven_repo:/root/.m2
+        - ./src:/usr/src/mymaven/src:ro
+        - ./pom.xml:/usr/src/mymaven/pom.xml:ro
+    environment:
+        - GF_ADMIN_API_URL=http://scloud-grafana:3000/api/
+        - GF_ADMIN_API_USER=admin
+        - GF_ADMIN_API_PASSWORD=1q2w3e
+        - GF_OAUTH_CLIENT_ID=grid-grafana
+        - GF_ROLE_ADMIN_MAPPING=ROLE_ADMIN,ROLE_OWNER
+        - GF_ROLE_EDITOR_MAPPING=ROLE_OPERATOR
+
+services:
+    grid-build-keycloak-plugin:
+        container_name: grid-build-keycloak-plugin
+        <<: *x-abstract-mvn-builder
+        command: mvn clean package -Dmaven.test.skip
+
+    grid-test-keycloak-plugin:
+        container_name: grid-test-keycloak-plugin
+        <<: *x-abstract-mvn-builder
+        command: mvn test #-Dtest="UserGrafanaSynchronizerTest"
+
+networks:
+    default:
+        name: "grid-gs"
+        ipam:
+            driver: default
