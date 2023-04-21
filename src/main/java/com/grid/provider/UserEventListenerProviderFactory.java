@@ -44,6 +44,6 @@ public class UserEventListenerProviderFactory implements EventListenerProviderFa
 
     @Override
     public String getId() {
-        return "user-grafana-synchronizer";
+        return "grafana-synchronizer";
     }
 }
