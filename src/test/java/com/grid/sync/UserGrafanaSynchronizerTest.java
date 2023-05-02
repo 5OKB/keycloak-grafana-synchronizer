@@ -55,6 +55,6 @@ public class UserGrafanaSynchronizerTest {
     }
 
     private RolesMapper buildRolesMapper() {
-        return new RolesMapper(System.getenv("GF_ROLE_ADMIN_MAPPING"), System.getenv("GF_ROLE_EDITOR_MAPPING"), Logger.getLogger(RolesMapper.class));
+        return new RolesMapper(System.getenv("GF_ROLE_GRAFANA_ADMIN_MAPPING"), System.getenv("GF_ROLE_ORG_ADMIN_MAPPING"), System.getenv("GF_ROLE_ORG_EDITOR_MAPPING"), Logger.getLogger(RolesMapper.class));
     }
 }

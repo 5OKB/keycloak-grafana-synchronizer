@@ -15,8 +15,9 @@ x-abstract-mvn-builder: &x-abstract-mvn-builder
         - GF_ADMIN_API_USER=admin
         - GF_ADMIN_API_PASSWORD=1q2w3e
         - GF_OAUTH_CLIENT_ID=grid-grafana
-        - GF_ROLE_ADMIN_MAPPING=ROLE_ADMIN,ROLE_OWNER
-        - GF_ROLE_EDITOR_MAPPING=ROLE_OPERATOR
+        - GF_ROLE_GRAFANA_ADMIN_MAPPING=ROLE_ADMIN
+        - GF_ROLE_ORG_ADMIN_MAPPING=ROLE_OWNER
+        - GF_ROLE_ORG_EDITOR_MAPPING=ROLE_OPERATOR
 
 services:
     grid-build-keycloak-plugin:

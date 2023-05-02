@@ -42,7 +42,14 @@ public class UserGrafanaSynchronizer {
     public void sync(UserModel user) throws SyncException {
         try {
             User grafanaUser = this.findOrCreateGrafanaUser(user);
-            String targetGrafanaRole = this.rolesMapper.getGrafanaRole(user.getRoleMappingsStream());
+
+            String targetGrafanaRole = this.rolesMapper.getGrafanaRole(user);
+
+            this.syncGrafanaUserPermissions(grafanaUser, targetGrafanaRole);
+
+            if (grafanaUser.isGrafanaAdmin) {
+                return;
+            }
 
             List<Organization> targetGrafanaOrgs = this.grafanaClient.findOrganizationsByNames(buildGroupsNames(user.getGroupsStream()));
 
@@ -85,5 +92,12 @@ public class UserGrafanaSynchronizer {
         }
 
         throw new SyncException("Fail to sync user " + user.getEmail(), null);
+    }
+
+    private void syncGrafanaUserPermissions(User user, String role) throws ClientException {
+        if (role.equals(User.ROLE_GRAFANA_ADMIN) != user.isGrafanaAdmin) {
+            user.isGrafanaAdmin = role.equals(User.ROLE_GRAFANA_ADMIN);
+            this.grafanaClient.saveUserPermissions(user);
+        }
     }
 }

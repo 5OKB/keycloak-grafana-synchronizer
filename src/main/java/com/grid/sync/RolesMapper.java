@@ -3,17 +3,19 @@ package com.grid.sync;
 import com.grid.grafana.entity.User;
 import org.jboss.logging.Logger;
 import org.keycloak.models.RoleModel;
+import org.keycloak.models.UserModel;
+import org.keycloak.models.utils.RoleUtils;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public class RolesMapper {
     private final Map<String, String> rolesMap = new HashMap<>();
 
-    public RolesMapper(String roleAdminValues, String roleEditorValues, Logger logger) {
-        this.setMapping(roleEditorValues, User.ROLE_EDITOR);
-        this.setMapping(roleAdminValues, User.ROLE_ADMIN);
+    public RolesMapper(String roleGrafanaAdminValues, String roleOrgAdminValues, String roleOrgEditorValues, Logger logger) {
+        this.setMapping(roleOrgEditorValues, User.ROLE_ORG_EDITOR);
+        this.setMapping(roleOrgAdminValues, User.ROLE_ORG_ADMIN);
+        this.setMapping(roleGrafanaAdminValues, User.ROLE_GRAFANA_ADMIN);
 
         logger.infof("Roles mapping: %s \n", this.rolesMap.toString());
     }
@@ -30,14 +32,14 @@ public class RolesMapper {
         }
     }
 
-    public String getGrafanaRole(Stream<RoleModel> roles) {
+    public String getGrafanaRole(UserModel user) {
         // it returns the first matched role only
-        for (String value : roles.map(RoleModel::getName).toArray(String[]::new)) {
-            if (this.rolesMap.containsKey(value)) {
-                return this.rolesMap.get(value);
+        for (RoleModel role : RoleUtils.getDeepUserRoleMappings(user)) {
+            if (this.rolesMap.containsKey(role.getName())) {
+                return this.rolesMap.get(role.getName());
             }
         }
-        return User.ROLE_VIEWER;
+        return User.ROLE_ORG_VIEWER;
     }
 }
 

@@ -27,7 +27,7 @@ public class UserEventListenerProviderFactory implements EventListenerProviderFa
         try {
             HttpClient httpClient = new HttpClient(System.getenv("GF_ADMIN_API_URL"), System.getenv("GF_ADMIN_API_USER"), System.getenv("GF_ADMIN_API_PASSWORD"), Logger.getLogger(HttpClient.class));
             Client grafanaClient = new Client(httpClient, System.getenv("GF_ADMIN_API_URL"), Logger.getLogger(Client.class));
-            RolesMapper rolesMapper = new RolesMapper(System.getenv("GF_ROLE_ADMIN_MAPPING"), System.getenv("GF_ROLE_EDITOR_MAPPING"), Logger.getLogger(RolesMapper.class));
+            RolesMapper rolesMapper = new RolesMapper(System.getenv("GF_ROLE_GRAFANA_ADMIN_MAPPING"), System.getenv("GF_ROLE_ORG_ADMIN_MAPPING"), System.getenv("GF_ROLE_ORG_EDITOR_MAPPING"), Logger.getLogger(RolesMapper.class));
             this.userGrafanaSynchronizer = new UserGrafanaSynchronizer(grafanaClient, rolesMapper, Logger.getLogger(UserGrafanaSynchronizer.class));
         } catch (Exception e) {
             throw new RuntimeException(e);
