@@ -68,6 +68,21 @@ public class Client {
         }
     }
 
+    public void saveUserPermissions(User user) throws ClientException {
+        HttpPut request = new HttpPut(this.baseUrl + "admin/users/" + user.id + "/permissions");
+        String requestJson = "{\"isGrafanaAdmin\":" + user.isGrafanaAdmin + "}";
+        request.setEntity(new StringEntity(requestJson, ContentType.APPLICATION_JSON));
+        try (CloseableHttpResponse response = this.execute(request)) {
+            this.logger.infof("Setting user %s permissions. isGrafanaAdmin:%s", user.email, user.isGrafanaAdmin);
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                return;
+            }
+            throw new ClientException(response.getStatusLine().getReasonPhrase());
+        } catch (Exception e) {
+            throw new ClientException(e.getMessage(), e);
+        }
+    }
+
     public void removeUser(User user) throws ClientException {
         HttpDelete request = new HttpDelete(this.baseUrl + "admin/users/" + user.id);
 
