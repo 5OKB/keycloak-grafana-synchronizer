@@ -3,6 +3,7 @@ package com.grid.grafana;
 import com.grid.grafana.entity.Organization;
 import com.grid.grafana.entity.User;
 import com.grid.grafana.exception.ClientException;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.jboss.logging.Logger;
 import org.junit.Test;
 
@@ -12,34 +13,62 @@ import static org.junit.Assert.*;
 
 public class ClientTest {
     @Test
-    public void findUserByEmailSuccess() {
-        String expectedEmail = "owner@gridgs.local";
+    public void createAndDeleteUserSuccess() {
+        String expectedEmail = "org_user_" + RandomStringUtils.randomAlphabetic(10) + "@example.com";
 
-        HttpClient httpClient = this.buildHttpClient();
-        Client client = new Client(httpClient, System.getenv("GF_ADMIN_API_URL"), Logger.getLogger(Client.class));
+        User user = new User();
+        user.email = expectedEmail;
+        user.password = "tralala";
 
-        User user = client.findUserByEmail(expectedEmail);
+        Client client = this.buildClient();
 
-        assertNotNull(user);
+        // test create
+        client.saveUser(user);
+
         assertEquals(expectedEmail, user.email);
         assertTrue(user.id > 0);
-    }
+        assertFalse(user.isGrafanaAdmin);
 
-    @Test
-    public void findUserByEmailReturnEmptySuccess() {
-        String expectedEmail = "notexistinguser@example.com";
+        // test find
+        user = client.findUserByEmail(expectedEmail);
+        assertEquals(expectedEmail, user.email);
+        assertTrue(user.id > 0);
 
-        HttpClient httpClient = this.buildHttpClient();
-        Client client = new Client(httpClient, System.getenv("GF_ADMIN_API_URL"), Logger.getLogger(Client.class));
+        // test remove
+        client.removeUser(user);
 
-        User user = client.findUserByEmail(expectedEmail);
-
+        user = client.findUserByEmail(expectedEmail);
         assertNull(user);
     }
 
     @Test
+    public void createGrafanaAdminUser() {
+        String expectedEmail = "grafana_admin_" + RandomStringUtils.randomAlphabetic(10) + "@example.com";
+
+        User user = new User();
+        user.email = expectedEmail;
+        user.password = "tralala";
+
+        Client client = this.buildClient();
+
+        client.saveUser(user);
+        assertEquals(expectedEmail, user.email);
+        assertTrue(user.id > 0);
+        assertFalse(user.isGrafanaAdmin);
+
+        user.isGrafanaAdmin = true;
+        client.saveUserPermissions(user);
+        assertEquals(expectedEmail, user.email);
+        assertTrue(user.isGrafanaAdmin);
+
+        user = client.findUserByEmail(expectedEmail);
+        assertEquals(expectedEmail, user.email);
+        assertTrue(user.isGrafanaAdmin);
+    }
+
+    @Test
     public void findUserByEmailReturnException() {
-        String expectedEmail = "owner@gridgs.local";
+        String expectedEmail = "someuser@example.com";
 
         HttpClient httpClient = this.buildHttpClient();
         Client client = new Client(httpClient, "https://wrong_address", Logger.getLogger(Client.class));
@@ -50,39 +79,23 @@ public class ClientTest {
     }
 
     @Test
-    public void findOrganisationByNamesSuccess() {
-        String expectedOrganisation = "5OKB";
+    public void createAndFindOrganisationByNamesSuccess() {
+        String expectedOrganisationName = "Org" + RandomStringUtils.randomAlphabetic(10);
 
-        String[] orgNames = {"tralala", expectedOrganisation, "pumpurum"};
+        // create organization
+        Organization organization = new Organization();
+        organization.name = expectedOrganisationName;
+        Client client = this.buildClient();
+        client.saveOrganization(organization);
+        assertEquals(expectedOrganisationName, organization.name);
+        assertTrue("Organisation id is missing", organization.id > 0);
 
-        HttpClient httpClient = this.buildHttpClient();
-        Client client = new Client(httpClient, System.getenv("GF_ADMIN_API_URL"), Logger.getLogger(Client.class));
+        String[] orgNames = {"tralala", expectedOrganisationName, "pumpurum"};
 
         List<Organization> organizations = client.findOrganizationsByNames(orgNames);
 
         assertEquals(1, organizations.size());
-        assertEquals(expectedOrganisation, organizations.get(0).name);
-    }
-
-    @Test
-    public void createAndDeleteUserSuccess() {
-        String expectedEmail = "newuser@gridgs.local";
-
-        User user = new User();
-        user.email = expectedEmail;
-        user.password = "tralala";
-
-        HttpClient httpClient = this.buildHttpClient();
-        Client client = new Client(httpClient, System.getenv("GF_ADMIN_API_URL"), Logger.getLogger(Client.class));
-        client.saveUser(user);
-
-        assertEquals(expectedEmail, user.email);
-        assertTrue(user.id > 0);
-
-        client.removeUser(user);
-
-        user = client.findUserByEmail(expectedEmail);
-        assertNull(user);
+        assertEquals(expectedOrganisationName, organizations.get(0).name);
     }
 
     private HttpClient buildHttpClient() {
@@ -91,5 +104,10 @@ public class ClientTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private Client buildClient() {
+        HttpClient httpClient = this.buildHttpClient();
+        return new Client(httpClient, System.getenv("GF_ADMIN_API_URL"), Logger.getLogger(Client.class));
     }
 }
