@@ -11,27 +11,49 @@ x-abstract-mvn-builder: &x-abstract-mvn-builder
         - ./src:/usr/src/mymaven/src:ro
         - ./pom.xml:/usr/src/mymaven/pom.xml:ro
     environment:
-        - GF_ADMIN_API_URL=http://scloud-grafana:3000/api/
+        - GF_ADMIN_API_URL=http://grid-keycloak-plugin-grafana:3000/api/
         - GF_ADMIN_API_USER=admin
         - GF_ADMIN_API_PASSWORD=1q2w3e
         - GF_OAUTH_CLIENT_ID=grid-grafana
-        - GF_ROLE_GRAFANA_ADMIN_MAPPING=ROLE_ADMIN
-        - GF_ROLE_ORG_ADMIN_MAPPING=ROLE_OWNER
-        - GF_ROLE_ORG_EDITOR_MAPPING=ROLE_OPERATOR
+        - GF_ROLE_GRAFANA_ADMIN_MAPPING=ROLE_KEYCLOAK_SUPER_ADMIN
+        - GF_ROLE_ORG_ADMIN_MAPPING=ROLE_KEYCLOAK_ORG_ADMIN
+        - GF_ROLE_ORG_EDITOR_MAPPING=ROLE_KEYCLOAK_ORG_EDITOR
+    depends_on:
+        - grid-keycloak-plugin-grafana
 
 services:
-    grid-build-keycloak-plugin:
-        container_name: grid-build-keycloak-plugin
+    grid-keycloak-plugin-build:
+        container_name: grid-keycloak-plugin-build
         <<: *x-abstract-mvn-builder
-        command: mvn clean package -Dmaven.test.skip
+        command: mvn clean package
 
-    grid-test-keycloak-plugin:
-        container_name: grid-test-keycloak-plugin
+    grid-keycloak-plugin-test:
+        container_name: grid-keycloak-plugin-test
         <<: *x-abstract-mvn-builder
-        command: mvn test #-Dtest="UserGrafanaSynchronizerTest"
+        command: mvn test #-Dtest="ClientTest"
+
+    grid-keycloak-plugin-grafana:
+        container_name: grid-keycloak-plugin-grafana
+        image: grafana/grafana:9.5.1
+        #ports:
+        #    - "3000:3000"
+        environment:
+            - GF_AUTH_ANONYMOUS_ENABLED=false
+            - GF_LOG_FILTERS=rendering:debug
+            - GF_LOG_LEVEL=debug
+            - GF_SECURITY_ADMIN_USER=admin
+            - GF_SECURITY_ADMIN_PASSWORD=1q2w3e
+
+    grid-keycloak-plugin-wait-for-dependencies:
+        container_name: grid-keycloak-plugin-wait-for-dependencies
+        image: dadarek/wait-for-dependencies
+        depends_on:
+            - grid-keycloak-plugin-grafana
+        command: grid-keycloak-plugin-grafana:3000
+
 
 networks:
     default:
-        name: "grid-gs"
+        name: "grid-keycloak-plugin"
         ipam:
             driver: default

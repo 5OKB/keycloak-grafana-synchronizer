@@ -2,6 +2,7 @@ package com.grid.grafana;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.grid.grafana.entity.Organization;
 import com.grid.grafana.entity.User;
 import com.grid.grafana.entity.UserOrganization;
@@ -125,6 +126,27 @@ public class Client {
             return result;
         } catch (Exception e) {
             throw new ClientException(e.getMessage(), e);
+        }
+    }
+
+    public void saveOrganization(Organization organization) throws ClientException {
+        if (organization.id > 0) {
+            throw new ClientException("Updating of the organization is not implemented yet");
+        } else {
+            HttpPost request = new HttpPost(this.baseUrl + "orgs");
+            try {
+                request.setEntity(new StringEntity(this.serialize(organization), ContentType.APPLICATION_JSON));
+                try (CloseableHttpResponse response = this.execute(request)) {
+                    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                        ObjectNode newOrganization = this.unserialize(response.getEntity().getContent(), ObjectNode.class);
+                        organization.id = newOrganization.get("orgId").asInt();
+                        return;
+                    }
+                    throw new ClientException("saveOrganization error: " + response.getStatusLine().getStatusCode(), null);
+                }
+            } catch (Exception e) {
+                throw new ClientException(e.getMessage(), e);
+            }
         }
     }
 
