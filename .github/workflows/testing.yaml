@@ -1,0 +1,21 @@
+name: Tests
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for Grafana
+        run: docker compose -f docker-compose.dev.yml run --rm grid-keycloak-plugin-wait-for-dependencies
+
+      - name: Run integration tests
+        run: docker compose -f docker-compose.dev.yml up --abort-on-container-exit --exit-code-from grid-keycloak-plugin-test grid-keycloak-plugin-test
+
+      - name: Stop test stack
+        if: always()
+        run: docker compose -f docker-compose.dev.yml down --volumes --remove-orphans
