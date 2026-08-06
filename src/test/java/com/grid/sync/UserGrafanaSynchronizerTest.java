@@ -53,13 +53,15 @@ public class UserGrafanaSynchronizerTest {
         assertEquals(expectedEmail, grafanaUser.email);
 
         List<UserOrganization> orgs = this.client.findUserOrganizations(grafanaUser.id);
-        assertEquals(1, orgs.size());
+        assertEquals(2, orgs.size());
 
-        for (UserOrganization userOrg : orgs) {
-            assertEquals(organization.id, userOrg.orgId);
-            assertEquals(expectedOrgName, userOrg.name);
-            assertEquals(expectedOrgRole, userOrg.role);
-        }
+        UserOrganization mainOrg = orgs.stream().filter(org -> org.orgId == 1).findFirst().orElseThrow(AssertionError::new);
+        assertEquals("Main Org.", mainOrg.name);
+        assertEquals(User.ROLE_ORG_VIEWER, mainOrg.role);
+
+        UserOrganization targetOrg = orgs.stream().filter(org -> org.orgId == organization.id).findFirst().orElseThrow(AssertionError::new);
+        assertEquals(expectedOrgName, targetOrg.name);
+        assertEquals(expectedOrgRole, targetOrg.role);
     }
 
     @Test
